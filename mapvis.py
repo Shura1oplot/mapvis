@@ -31,8 +31,9 @@ except IOError:
 MAPBOX_STYLES = {
     "navigation-day": "mapbox://styles/mapbox/navigation-day-v1",
     "navigation-night": "mapbox://styles/mapbox/navigation-night-v1",
-    "light-rus": "mapbox://styles/shura1oplot/clzs376hx00ec01qxg1nj9voa",
-    "navigation-day-rus": "mapbox://styles/shura1oplot/clzs3r94j007u01qucder5lkv"
+
+    "light-rus": "mapbox://styles/shura1oplot/clztlhw0f00fl01qof3dbahjt",
+    "dark-rus": "mapbox://styles/shura1oplot/clztmf5yo003z01p90h07cthn",
 }
 
 
@@ -44,6 +45,7 @@ with open(BASEDIR / "Database" / "russian_regions_geojson.json",
 def create_map(excel_file,
                filter_columns,
                mapbox_style,
+               mapbox_style_custom,
                extra_layers,
                *filter_values):
     map_layers = []
@@ -129,6 +131,9 @@ def create_map(excel_file,
     mapbox_style = mapbox_style or "open-street-map"
     mapbox_style = MAPBOX_STYLES.get(mapbox_style, mapbox_style)
 
+    if mapbox_style == "custom":
+        mapbox_style = mapbox_style_custom
+
     if mapbox_style.startswith("stamen-"):
         mapbox_accesstoken = STADIA_MAPS_API_KEY
     else:
@@ -196,26 +201,36 @@ def main(argv=sys.argv):
         with gr.Row():
             with gr.Column(scale=1):
                 map_style = gr.Dropdown(
-                        choices=["open-street-map",
-                                 "white-bg",
-                                 "basic",
-                                 "streets",
-                                 "outdoors",
-                                 "light",
-                                 # "light-rus",
-                                 "dark",
-                                 "satellite",
-                                 "satellite-streets",
-                                 "navigation-day",
-                                 # "navigation-day-rus",
-                                 "navigation-night",
-                                 # "stamen-terrain",
-                                 # "stamen-toner",
-                                 # "stamen-watercolor",
-                                 "carto-darkmatter",
-                                 "carto-positron",
-                                ],
-                        label="Map style")
+                    choices=["open-street-map",
+                             "white-bg",
+                             "basic",
+                             "streets",
+                             "outdoors",
+                             "light",
+                             "light-rus",
+                             "dark",
+                             "dark-rus",
+                             "satellite",
+                             "satellite-streets",
+                             "navigation-day",
+                             "navigation-night",
+                             # "stamen-terrain",
+                             # "stamen-toner",
+                             # "stamen-watercolor",
+                             "carto-darkmatter",
+                             "carto-positron",
+                             "custom",
+                            ],
+                    label="Map style")
+
+                map_style_custom = gr.Textbox(
+                    interactive=True,
+                    visible=False,
+                    label="Custom map style")
+
+                map_style.select(fn=lambda sel: gr.update(visible=sel == "custom"),
+                                 inputs=[map_style],
+                                 outputs=[map_style_custom])
 
                 extra_layers = gr.Dropdown(
                         choices=["Federal districts",
@@ -237,7 +252,7 @@ def main(argv=sys.argv):
                     if not excel_file:
                         return
 
-                    inputs = [map_style, extra_layers]
+                    inputs = [map_style, map_style_custom, extra_layers]
                     filters = []
                     filter_columns = []
 
