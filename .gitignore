@@ -162,8 +162,8 @@ cython_debug/
 #.idea/
 
 
-Database/russia_regions_geojson.json
-Database/russia_regions_osm.json
+Database/russian_regions_geojson.json
+Database/russian_regions_osm.json
 
 Secrets/mapbox_token.txt
 Secrets/stadia_maps_api_key.txt
