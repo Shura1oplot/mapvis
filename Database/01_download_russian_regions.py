@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-import os
-from pathlib import Path
-import json
-import subprocess
 import requests
-import geojson
-from shapely.geometry import shape, mapping
 
 
 def main(argv=sys.argv):
