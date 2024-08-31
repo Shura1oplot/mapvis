@@ -196,7 +196,9 @@ def generate_filter_options(excel_file):
 def main(argv=sys.argv):
     with gr.Blocks() as demo:
         with gr.Row():
-            input_file = gr.File(label="Upload Excel File")
+            input_file = gr.File(
+                label="Select Excel File",
+                file_types=[".xlsx", ".xlsm"])
 
         with gr.Row():
             with gr.Column(scale=1):
