@@ -280,8 +280,11 @@ def main(argv=sys.argv):
             with gr.Column(scale=4):
                 output = gr.Plot(label="Map")
 
-    demo.launch()
+    demo.launch(root_path="/mapvis",
+                auth=[(os.environ["GRADIO_AUTH_USER"],
+                       os.environ["GRADIO_AUTH_PASS"])])
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

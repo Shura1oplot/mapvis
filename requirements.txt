@@ -2,3 +2,5 @@ python-dotenv
 pandas
 plotly
 gradio
+openpyxl
+
