@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 from functools import partial
 import json
 from pathlib import Path
-import gradio as gr
+
+from dotenv import load_dotenv
 import pandas as pd
+import gradio as gr
 import plotly.graph_objects as go
 
 
-BASEDIR = Path(".")  # FIXME for the frozen state
+load_dotenv()
 
 
-try:
-    with open(BASEDIR / "Secrets" / "mapbox_token.txt") as fp:
-        MAPBOX_TOKEN = fp.read().strip()
-except IOError:
-    MAPBOX_TOKEN = None
+BASEDIR = Path(__file__).parent.absolute()
 
-
-try:
-    with open(BASEDIR / "Secrets" / "stadia_maps_api_key.txt") as fp:
-        STADIA_MAPS_API_KEY = fp.read().strip()
-except IOError:
-    STADIA_MAPS_API_KEY = None
+MAPBOX_TOKEN = os.environ.get("MAPBOX_TOKEN")
+STADIA_MAPS_API_KEY = os.environ.get("STADIA_MAPS_API_KEY")
 
 
 # https://docs.mapbox.com/mapbox-gl-js/guides/styles/
