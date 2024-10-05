@@ -5,6 +5,7 @@ import os
 from functools import partial
 import json
 from pathlib import Path
+import hashlib
 
 from dotenv import load_dotenv
 import pandas as pd
@@ -15,7 +16,9 @@ import plotly.graph_objects as go
 load_dotenv()
 
 
-BASEDIR = Path(__file__).parent.absolute()
+BASE_DIR = Path(__file__).parent.absolute()
+
+PASSWORD_SALT = os.environ["PASSWORD_SALT"]
 
 MAPBOX_TOKEN = os.environ.get("MAPBOX_TOKEN")
 STADIA_MAPS_API_KEY = os.environ.get("STADIA_MAPS_API_KEY")
@@ -32,7 +35,7 @@ MAPBOX_STYLES = {
 }
 
 
-with open(BASEDIR / "Database" / "russian_regions_geojson.json",
+with open(BASE_DIR / "Database" / "russian_regions_geojson.json",
           encoding="utf-8") as fp:
     RUSSIAN_REGIONS = json.load(fp)
 
@@ -188,16 +191,35 @@ def generate_filter_options(excel_file):
     return filter_options
 
 
+def auth(username, password):
+    users = {}
+
+    with open(BASE_DIR / "users.txt", "r", encoding="utf-8") as fp:
+        for line in fp:
+            uname, hash_ = line.split(":", 2)
+            users[uname] = hash_.rstrip()
+
+    if username not in users:
+        return False
+
+    hash1 = users[username]
+
+    hash2 = hashlib.sha256(
+        (password + PASSWORD_SALT).encode("utf-8")).hexdigest()
+
+    return hash1 == hash2
+
+
 def main(argv=sys.argv):
     with gr.Blocks() as demo:
         with gr.Row():
-            input_file = gr.File(
+            in_file = gr.File(
                 label="Select Excel File",
                 file_types=[".xlsx", ".xlsm"])
 
         with gr.Row():
             with gr.Column(scale=1):
-                map_style = gr.Dropdown(
+                in_map_style = gr.Dropdown(
                     choices=["open-street-map",
                              "white-bg",
                              "basic",
@@ -220,14 +242,15 @@ def main(argv=sys.argv):
                             ],
                     label="Map style")
 
-                map_style_custom = gr.Textbox(
+                in_map_style_custom = gr.Textbox(
                     interactive=True,
                     visible=False,
                     label="Custom map style")
 
-                map_style.select(fn=lambda sel: gr.update(visible=sel == "custom"),
-                                 inputs=[map_style],
-                                 outputs=[map_style_custom])
+                in_map_style.select(
+                    fn=lambda sel: gr.update(visible=sel == "custom"),
+                    inputs=[in_map_style],
+                    outputs=[in_map_style_custom])
 
                 extra_layers = gr.Dropdown(
                         choices=["Federal districts",
@@ -236,20 +259,20 @@ def main(argv=sys.argv):
                         multiselect=True,
                         label="Extra layers")
 
-                clear_btn = None
-                submit_btn = None
-                output = None
+                btn_clear = None
+                btn_submit = None
+                out_plot = None
 
-                @gr.render(inputs=[input_file])
+                @gr.render(inputs=[in_file])
                 def update_layout(excel_file):
-                    nonlocal clear_btn
-                    nonlocal submit_btn
-                    nonlocal output
+                    nonlocal btn_clear
+                    nonlocal btn_submit
+                    nonlocal out_plot
 
                     if not excel_file:
                         return
 
-                    inputs = [map_style, map_style_custom, extra_layers]
+                    inputs = [in_map_style, in_map_style_custom, extra_layers]
                     filters = []
                     filter_columns = []
 
@@ -257,32 +280,33 @@ def main(argv=sys.argv):
 
                     for column, options in filter_options.items():
                         filter_columns.append(column)
-                        dropdown = gr.Dropdown(choices=options,
-                                               multiselect=True,
-                                               label=f"Filter by {column}")
+                        in_filter = gr.Dropdown(choices=options,
+                                                multiselect=True,
+                                                label=f"Filter by {column}")
 
-                        filters.append(dropdown)
-                        inputs.append(dropdown)
+                        filters.append(in_filter)
+                        inputs.append(in_filter)
 
-                    clear_btn.click(fn=lambda: [[]] * len(filters),
+                    btn_clear.click(fn=lambda: [[]] * len(filters),
                                     outputs=filters)
 
-                    submit_btn.click(fn=partial(create_map,
+                    btn_submit.click(fn=partial(create_map,
                                                 excel_file,
                                                 filter_columns),
                                      inputs=inputs,
-                                     outputs=output)
+                                     outputs=out_plot)
 
                 with gr.Row():
-                    clear_btn = gr.ClearButton()
-                    submit_btn = gr.Button("Submit")
+                    btn_clear = gr.ClearButton()
+                    btn_submit = gr.Button("Submit")
 
             with gr.Column(scale=4):
-                output = gr.Plot(label="Map")
+                out_plot = gr.Plot(label="Map")
+
+    demo.queue(default_concurrency_limit=20)
 
     demo.launch(root_path="/mapvis",
-                auth=[(os.environ["GRADIO_AUTH_USER"],
-                       os.environ["GRADIO_AUTH_PASS"])])
+                auth=auth)
 
 
 if __name__ == "__main__":
