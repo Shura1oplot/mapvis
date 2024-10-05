@@ -162,8 +162,9 @@ cython_debug/
 #.idea/
 
 
+.DS_Store
+
 Database/russian_regions_geojson.json
 Database/russian_regions_osm.json
 
 users.txt
-
