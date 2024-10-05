@@ -164,3 +164,6 @@ cython_debug/
 
 Database/russian_regions_geojson.json
 Database/russian_regions_osm.json
+
+users.txt
+
