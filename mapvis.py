@@ -303,7 +303,7 @@ def main(argv=sys.argv):
             with gr.Column(scale=4):
                 out_plot = gr.Plot(label="Map")
 
-    demo.queue(default_concurrency_limit=20)  # FIXME: constant
+    demo.queue(default_concurrency_limit=5)  # FIXME: constant
 
     demo.launch(root_path="/mapvis",
                 auth=auth)
